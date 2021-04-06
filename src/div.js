@@ -1,0 +1,10 @@
+console.log(Math.floor(0 / 3));
+console.log(Math.floor(1 / 3));
+console.log(Math.floor(2 / 3));
+console.log(Math.floor(3 / 3));
+console.log(Math.floor(4 / 3));
+console.log(Math.floor(5 / 3));
+console.log(Math.floor(6 / 3));
+console.log(Math.floor(7 / 3));
+console.log(Math.floor(8 / 3));
+console.log(Math.floor(9 / 3));
