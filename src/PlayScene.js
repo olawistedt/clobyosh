@@ -140,66 +140,66 @@ class PlayScene extends Phaser.Scene {
           'pointerdown', () => {this.cardIsPressed(this.spritesHash[card_id])},
           this);
     }
-    this.deal();
+    this.max_depth = 4;
+    this.upperX = 0;
+    this.lowerX = 0;
+    console.log('Deck ' + this.gameClobyosh.dealer.deck);
+    this.dealThreeCards(
+        this.gameClobyosh.lowerHandPlayer ==
+            this.gameClobyosh.dealer.current_dealer,
+        0);
   }
 
   /////////////////////////////////////////////////////////////////////
-  // Deal the 12 cards to the upper and lower hands.
+  // Deal the 6 cards to the upper and lower hands. 3 at the time
   /////////////////////////////////////////////////////////////////////
-  deal() {
-    this.max_depth = 4;
-    let dealTween = [];
-    let upper_x = 0;
-    let lower_x = 0;
-    let x_value = 0;
-    console.log('Deck ' + this.gameClobyosh.dealer.deck);
-    for (let i = CARD_CLOBYOSH_IDS.length - 1; i >= 20; i--) {
-      let card_id = this.gameClobyosh.dealer.getTopCard();
-      let y_base = 0;
-      if ((Math.floor((i + 1) / 3) % 2 != 0 &&
-           this.gameClobyosh.upperHandPlayer ==
-               this.gameClobyosh.dealer.current_dealer) ||
-          (Math.floor((i + 1) / 3) % 2 == 0 &&
-           this.gameClobyosh.lowerHandPlayer ==
-               this.gameClobyosh.dealer.current_dealer)) {
-        this.gameClobyosh.upperHandPlayer.addCard(card_id);
-        y_base = HAND_DIST_FROM_HORISONTAL_BORDERS;
-        x_value = this.handDistFromVerticalBorder(true) +
-            upper_x * HAND_DIST_BETWEEN_CARDS;
-        upper_x++;
-      } else {
-        this.gameClobyosh.lowerHandPlayer.addCard(card_id);
-        y_base = this.game.renderer.height - HAND_DIST_FROM_HORISONTAL_BORDERS;
-        x_value = this.handDistFromVerticalBorder(true) +
-            lower_x * HAND_DIST_BETWEEN_CARDS;
-        lower_x++;
-      }
+  dealThreeCards(isUpper, counter) {
+    let topCard = [];
 
-      dealTween[i] = this.tweens.create({
-        targets: this.spritesHash[card_id],
-        y: y_base,
-        x: x_value,
+    topCard.push(this.gameClobyosh.dealer.getTopCard());
+    topCard.push(this.gameClobyosh.dealer.getTopCard());
+    topCard.push(this.gameClobyosh.dealer.getTopCard());
+    let x = this.upperX;
+    let yBase = HAND_DIST_FROM_HORISONTAL_BORDERS;
+    let playerToGetCards = this.gameClobyosh.upperHandPlayer;
+    if (!isUpper) {
+      playerToGetCards = this.gameClobyosh.lowerHandPlayer
+      yBase = this.game.renderer.height - HAND_DIST_FROM_HORISONTAL_BORDERS;
+      x = this.lowerX;
+      this.lowerX += 3;
+    } else {
+      this.upperX += 3;
+    }
+
+    let timeline = this.tweens.createTimeline();
+
+    for (let i = 0; i < 3; i++) {
+      playerToGetCards.addCard(topCard[i]);
+
+      timeline.add({
+        targets: this.spritesHash[topCard[i]],
+        y: yBase,
+        x: HAND_DIST_FROM_VERTICAL_BORDERS + HAND_DIST_BETWEEN_CARDS * (i + x),
         duration: SPEED,
+        offset: 0,
         ease: 'Linear',
-        depth: CARD_CLOBYOSH_IDS.length + CARD_CLOBYOSH_IDS.length - i
-      })
-
-      dealTween[i].on('complete', () => {
-        if (i >= 21) {  // The cards to be dealth
-          dealTween[i - 1].play();
-          //          this.snd_deal_card.play();
-        } else {
-          // Turn the lower hand cards to show front
-          this.gameClobyosh.lowerHandPlayer.getHand().forEach(e => {
-            this.showFront(e);
-          });
-          this.placeCardsNice();
-          this.playCards();
-        }
+        depth: CARD_CLOBYOSH_IDS.length + CARD_CLOBYOSH_IDS.length + (i + x)
       });
     }
-    dealTween[CARD_CLOBYOSH_IDS.length - 1].play();
-    //    this.snd_deal_card.play();
+
+    timeline.play();
+
+    timeline.on('complete', () => {
+      counter += 3;
+      if (counter < 12) {
+        this.dealThreeCards(!isUpper, counter);
+      } else {
+        // Turn the lower hand cards to show front
+        this.gameClobyosh.lowerHandPlayer.getHand().forEach(e => {
+          this.showFront(e);
+        });
+      }
+    });
   }
 
   playCards() {
